@@ -1,5 +1,5 @@
-#ifndef STRIP_LED_H
-#define STRIP_LED_H
+#ifndef STRIP_LED_HPP
+#define STRIP_LED_HPP
 
 #include <stdint.h>
 #include <atomic>
