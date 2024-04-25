@@ -28,6 +28,8 @@ namespace LED
         END_OF_STATES
     };
 
+    std::atomic<led_state_t> g_led_state;
+
     //Set LED
     void FillLEDsFromPaletteColors( uint8_t colorIndex, CRGBPalette16 palette, TBlendType blend);
 

@@ -1,40 +1,26 @@
 #include <Arduino.h> 
 #include <atomic>
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEServer.h>
 #include <button.hpp>
+#include <esp_now.h>
 #include <stripLED.hpp>
+#include <WiFi.h>
 
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
 
-#define DEVICE1
+typedef struct led_data_t
+{
+  uint8_t led_state; 
+  uint8_t led_brightness;
+} led_data_t;
 
-#define SERVICE_UUID      "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+led_data_t current_state; 
 
-#ifdef DEVICE1
-  #define SERVER_CHAR_UUID  "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-  #define CLIENT_CHAR_UUID  "99e4ab0b-4186-45d5-9022-082f7acfc2cd"
-#endif
+esp_now_peer_info_t peer_info;
 
-#ifdef DEVICE2
-  #define SERVER_CHAR_UUID  "99e4ab0b-4186-45d5-9022-082f7acfc2cd"
-  #define CLIENT_CHAR_UUID  "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-#endif
+void on_data_sent(const uint8_t *mac_addr, esp_now_send_status_t status)
+{
+  Serial.printf("Last Packet Send Status: %s", status == ESP_NOW_SEND_SUCCESS ? "Success" : "Failed");
+}
 
-std::atomic<uint8_t> brightness = 255;
-
-const gpio_num_t BUTTON_NEXT = GPIO_NUM_10;
-const gpio_num_t BUTTON_PREV = GPIO_NUM_11;
-const gpio_num_t BUTTON_PLUS = GPIO_NUM_46;
-const gpio_num_t BUTTON_MINUS = GPIO_NUM_9;
-
-button::button next(BUTTON_NEXT);
-button::button prev(BUTTON_PREV);
-
-BLECharacteristic *p_led_state_characteristic; //server
-BLECharacteristic *p_recieved_characteristic; //client
 
 void setup() 
 {
@@ -42,49 +28,20 @@ void setup()
 
   Serial.begin(115200);
 
-  next.setCallback(LED::toggleState);
-  prev.setCallback(LED::reverseToggleState);
+  WiFi.mode(WIFI_STA);
 
-  Serial.println("Starting BLE work!");
-
-  BLEDevice::init("sus ble device");
-  BLEServer *pServer = BLEDevice::createServer();
-  BLEService *pService = pServer->createService(SERVICE_UUID);
-  p_led_state_characteristic = pService->createCharacteristic(
-                                         SERVER_CHAR_UUID,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE
-                                       );
-
-  BLEClient *pClient = BLEDevice::createClient();  
-
-  p_led_state_characteristic->setValue(std::to_string(static_cast<uint8_t>(LED::getState())));
-  pService->start();
-
-  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(true);
-  pAdvertising->setMinPreferred(0x06);  
-  pAdvertising->setMinPreferred(0x12);
-  BLEDevice::startAdvertising();
-
-  xTaskCreate(updateState, "update LED state", NULL, 1, NULL);
-}
-
-void updateState(void *pvParam)
-{
-  const ticktype_t xStateDelay = pdMS_TO_TICKS(100);
-  
-  for(;;)
-  {
-    p_led_state_characteristic->setValue(std::to_string(LED::getState()));
-
-    vTaskDelay(xStateDelay);
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
   }
 
+  esp_now_register_send_cb(on_data_sent);
+
+  Serial.println(WiFi.macAddress());
 }
+
 
 void loop() 
 {
-  vTaskSuspend(NULL);
+  current_state.led_state = static_cast<uint8_t>(LED::g_led_state);
 }
