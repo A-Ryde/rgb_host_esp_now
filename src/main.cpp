@@ -21,6 +21,13 @@ void on_data_sent(const uint8_t *mac_addr, esp_now_send_status_t status)
   Serial.printf("Last Packet Send Status: %s", status == ESP_NOW_SEND_SUCCESS ? "Success" : "Failed");
 }
 
+void on_receive_callback(const esp_now_recv_info_t *esp_now_info, const uint8_t *data, int data_len)
+{
+  led_data_t data_recieved;
+  memcpy(&data_recieved, data, sizeof(data));
+  g_led_state = static_cast<LED::led_state_t>(data_recieved.led_state);
+  LED::setBrightness(data_recieved.led_brightness);
+}
 
 void setup() 
 {
@@ -39,7 +46,6 @@ void setup()
 
   Serial.println(WiFi.macAddress());
 }
-
 
 void loop() 
 {

@@ -12,8 +12,6 @@ namespace LED
 { 
     CRGB leds[MAX_LEDS];
 
-    std::atomic<led_state_t> g_led_state;
-
     void FillLEDsFromPaletteColors(uint8_t colorIndex, CRGBPalette16 palette, TBlendType blend)
     {
         uint8_t brightness = 255;
