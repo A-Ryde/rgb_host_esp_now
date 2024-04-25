@@ -36,6 +36,7 @@ namespace LED
 
     void toggleState(void)
     {
+        ESP_LOGD("LED", "Toggle State ISR Triggered");
         uint8_t current_state = static_cast<uint8_t>(g_led_state.load());   
         current_state ++; 
         if(current_state == led_state_t::END_OF_STATES)
@@ -51,6 +52,7 @@ namespace LED
 
     void reverseToggleState(void)
     {
+        ESP_LOGD("LED", "Reverse Toggle State ISR Triggered");
         uint8_t current_state = static_cast<uint8_t>(g_led_state.load());   
         current_state --; 
         if(current_state == led_state_t::off)
