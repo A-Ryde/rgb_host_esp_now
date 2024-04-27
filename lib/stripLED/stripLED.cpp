@@ -3,13 +3,16 @@
 #define CHIPSET WS2811
 #define COLOR_ORDER RGB
 #define LED_PIN 48
-const uint8_t BRIGHTNESS = 255;
+const uint8_t BRIGHTNESS = 51;
 
 const uint16_t MAX_LEDS = 500;
 uint16_t g_num_leds = 0;
 
 namespace LED
 { 
+    std::atomic<led_state_t> g_led_state;
+    std::atomic<uint8_t> g_led_brightness;
+
     CRGB leds[MAX_LEDS];
 
     void FillLEDsFromPaletteColors(uint8_t colorIndex, CRGBPalette16 palette, TBlendType blend)
@@ -66,7 +69,13 @@ namespace LED
 
     void setBrightness(uint8_t brightness)
     {
+        g_led_brightness = constrain(brightness, 0, 255);
         FastLED.setBrightness(brightness);
+    }
+
+    uint8_t getBrightness(void)
+    {
+        return g_led_brightness.load();
     }
 
     void increaseBrightness(std::optional<uint8_t> brightness_amount)
@@ -75,14 +84,14 @@ namespace LED
         
         if(brightness_amount.has_value())
         {
-            uint8_t brightness = current_brightness + brightness_amount.value();
-            FastLED.setBrightness(constrain(brightness, 0, 255));
+            constrain(g_led_brightness += brightness_amount.value(), 0, 255);
+            FastLED.setBrightness(g_led_brightness);
         }
         else
         {
             const uint8_t brightness_adjust_amount = 51; //20% increment (of 255)
-            uint8_t brightness = current_brightness + brightness_adjust_amount;
-            FastLED.setBrightness(constrain(brightness, 0, 255));
+            constrain(g_led_brightness += brightness_adjust_amount, 0, 255);
+            FastLED.setBrightness(g_led_brightness);
         }
     }
 
@@ -92,14 +101,14 @@ namespace LED
         
         if(brightness_amount.has_value())
         {
-            uint8_t brightness = current_brightness - brightness_amount.value();
-            FastLED.setBrightness(constrain(brightness, 0, 255));
+            constrain(g_led_brightness -= brightness_amount.value(), 0, 255);
+            FastLED.setBrightness(g_led_brightness);
         }
         else
         {
-            const uint8_t brightness_adjust_amount = 51; //20% increment (of 255)
-            uint8_t brightness = current_brightness + brightness_adjust_amount;
-            FastLED.setBrightness(constrain(brightness, 0, 255));
+            const uint8_t brightness_adjust_amount = 51; //20% decrement (of 255)
+            constrain(g_led_brightness -= brightness_adjust_amount, 0, 255);
+            FastLED.setBrightness(g_led_brightness);
         }
     }
 
@@ -182,7 +191,8 @@ namespace LED
     {
         g_num_leds = num_leds;
         FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, num_leds).setCorrection(TypicalLEDStrip);
-        FastLED.setBrightness(255);
+        g_led_brightness = BRIGHTNESS;
+        FastLED.setBrightness(g_led_brightness);
         xTaskCreate(updateLEDs, "updateLED", 8192, NULL, 1, NULL);
     }
 

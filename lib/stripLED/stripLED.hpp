@@ -28,8 +28,6 @@ namespace LED
         END_OF_STATES
     };
 
-    std::atomic<led_state_t> g_led_state;
-
     //Set LED
     void FillLEDsFromPaletteColors( uint8_t colorIndex, CRGBPalette16 palette, TBlendType blend);
 
@@ -41,6 +39,7 @@ namespace LED
 
     //LED Brightness
     void setBrightness(uint8_t brightness);
+    uint8_t getBrightness(void);
     void increaseBrightness(std::optional<uint8_t> brightness_amount);
     void decreaseBrightness(std::optional<uint8_t> brightness_amount);   
     
