@@ -21,8 +21,8 @@
   In addition to this, there will be a master controller, separate with button controls for the whole network. 
 */
 
-#define FRONT_CONTROLLER
-const uint16_t num_leds = 300;
+#define REAR_CONTROLLER
+const uint16_t num_leds = 150;
 
 uint8_t master_mac_addr[] = {0xDC, 0x54, 0x75, 0xF1, 0xE1, 0xE0};
 

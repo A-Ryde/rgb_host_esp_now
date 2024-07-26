@@ -3,7 +3,7 @@
 #define CHIPSET WS2811
 #define COLOR_ORDER RGB
 #define LED_PIN 48
-const uint8_t BRIGHTNESS = 51;
+const uint8_t BRIGHTNESS = 255;
 
 const uint16_t MAX_LEDS = 500;
 uint16_t g_num_leds = 0;
